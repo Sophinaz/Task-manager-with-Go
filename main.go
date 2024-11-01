@@ -42,7 +42,7 @@ func main() {
 	router := gin.Default()
 	router.GET("/tasks", func(ctx *gin.Context) { getAllTasks(ctx, collection) })
 	router.GET("/tasks/:id", func(ctx *gin.Context) { getTaskById(ctx, collection) })
-	// router.PUT("/tasks/:id", updateTaskById)
+	router.PUT("/tasks/:id", func(ctx *gin.Context) {updateTaskById(ctx, collection)} )
 	router.DELETE("tasks/:id", func(ctx *gin.Context) {deleteTask(ctx, collection)})
 	router.POST("/tasks", func(ctx *gin.Context) { addTask(ctx, collection) })
 
@@ -87,31 +87,30 @@ func getTaskById(c *gin.Context, collection *mongo.Collection) {
 	c.IndentedJSON(http.StatusOK, task)
 }
 
-// func updateTaskById(c *gin.Context) {
-// 	id := c.Param("id")
+func updateTaskById(c *gin.Context, collection *mongo.Collection) {
+	id := c.Param("id")
 
-// 	var updateTask Task
+	var updateTask Task
 
-// 	err := c.ShouldBindJSON(&updateTask)
+	err := c.ShouldBindJSON(&updateTask)
 
-// 	if err != nil {
-// 		c.IndentedJSON(http.StatusBadRequest, err.Error())
-// 	}
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err.Error())
+	}
 
-// 	for i, task := range tasks {
-// 		if task.ID == id {
-// 			if updateTask.Title != "" {
-// 				tasks[i].Title = updateTask.Title
-// 			}
-// 			if updateTask.Description != "" {
-// 				tasks[i].Description = updateTask.Description
-// 			}
-// 			c.IndentedJSON(http.StatusOK, gin.H{"message": "task updated"})
-// 			return
-// 		}
-// 	}
-// 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Task not found"})
-// }
+	filter := bson.D{{"id", id}}
+	update1 := bson.D{{"$set", bson.D{{"title", updateTask.Title}}}}
+	update2 := bson.D{{"$set", bson.D{{"description", updateTask.Description}}}}
+
+	_, err = collection.UpdateOne(context.TODO(), filter, update1)
+	_, err = collection.UpdateOne(context.TODO(), filter, update2)
+
+	if err != nil {
+		log.Fatal(err)
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Task not found"})
+	}
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task updated"})
+}
 
 func deleteTask(c *gin.Context, collection *mongo.Collection) {
 	id := c.Param("id")
