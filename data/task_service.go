@@ -1,44 +1,26 @@
-package main
+package data
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"net/http"
-	"time"
+
+	"go-trial/task-manager/models"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-
-
-func main() {
-
-	router := gin.Default()
-	router.GET("/tasks", func(ctx *gin.Context) { getAllTasks(ctx, collection) })
-	router.GET("/tasks/:id", func(ctx *gin.Context) { getTaskById(ctx, collection) })
-	router.PUT("/tasks/:id", func(ctx *gin.Context) {updateTaskById(ctx, collection)} )
-	router.DELETE("tasks/:id", func(ctx *gin.Context) {deleteTask(ctx, collection)})
-	router.POST("/tasks", func(ctx *gin.Context) { addTask(ctx, collection) })
-
-	router.Run()
-}
-
-func getAllTasks(c *gin.Context, collection *mongo.Collection) {
-	fmt.Println(collection)
+func GetAllTasks() ([]models.Task, error) {
 	filter := bson.D{{}}
-	var tasks = []Task{}
-	cur, err := collection.Find(context.TODO(), filter)
+	var tasks = []models.Task{}
+	cur, err := Collection.Find(context.TODO(), filter)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	for cur.Next(context.TODO()) {
-		var task = Task{}
+		var task = models.Task{}
 		err = cur.Decode(&task)
 		if err != nil {
 			log.Fatal(err)
@@ -47,7 +29,7 @@ func getAllTasks(c *gin.Context, collection *mongo.Collection) {
 		tasks = append(tasks, task)
 	}
 
-	c.IndentedJSON(http.StatusOK, tasks)
+	return tasks
 }
 
 func getTaskById(c *gin.Context, collection *mongo.Collection) {

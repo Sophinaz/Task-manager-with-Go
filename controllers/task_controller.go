@@ -1,36 +1,17 @@
-package main
+package controllers
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/zaahidali/task_manager_api/data"
 )
 
-
-
-func main() {
-
-	router := gin.Default()
-	router.GET("/tasks", func(ctx *gin.Context) { getAllTasks(ctx, collection) })
-	router.GET("/tasks/:id", func(ctx *gin.Context) { getTaskById(ctx, collection) })
-	router.PUT("/tasks/:id", func(ctx *gin.Context) {updateTaskById(ctx, collection)} )
-	router.DELETE("tasks/:id", func(ctx *gin.Context) {deleteTask(ctx, collection)})
-	router.POST("/tasks", func(ctx *gin.Context) { addTask(ctx, collection) })
-
-	router.Run()
-}
 
 func getAllTasks(c *gin.Context, collection *mongo.Collection) {
 	fmt.Println(collection)
 	filter := bson.D{{}}
-	var tasks = []Task{}
+	var tasks = data.GetAllTasks()
 	cur, err := collection.Find(context.TODO(), filter)
 
 	if err != nil {
