@@ -1,4 +1,4 @@
-module github.com/zaahidali/task_manager_api
+module github.com/Sophinaz/Task-manager-with-Go
 
 go 1.22.5
 

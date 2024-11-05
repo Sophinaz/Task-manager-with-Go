@@ -2,11 +2,9 @@ package data
 
 import (
 	"context"
+	"github.com/Sophinaz/Task-manager-with-Go/models"
 	"log"
 
-	"go-trial/task-manager/models"
-
-	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -14,93 +12,57 @@ func GetAllTasks() ([]models.Task, error) {
 	filter := bson.D{{}}
 	var tasks = []models.Task{}
 	cur, err := Collection.Find(context.TODO(), filter)
-
 	if err != nil {
-		return err
+		return []models.Task{}, err
 	}
-
 	for cur.Next(context.TODO()) {
 		var task = models.Task{}
 		err = cur.Decode(&task)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("111")
 		}
-
 		tasks = append(tasks, task)
 	}
-
-	return tasks
+	return tasks, nil
 }
 
-func getTaskById(c *gin.Context, collection *mongo.Collection) {
-	id := c.Param("id")
-	var task = Task{}
-
+func GetTaskById(id string) (models.Task, error) {
+	var task = models.Task{}
 	filter := bson.D{{"id", id}}
-
-	err := collection.FindOne(context.TODO(), filter).Decode(&task)
-
+	err := Collection.FindOne(context.TODO(), filter).Decode(&task)
 	if err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Task not found"})
+		return models.Task{}, err
 	}
 
-	c.IndentedJSON(http.StatusOK, task)
+	return task, nil
 }
 
-func updateTaskById(c *gin.Context, collection *mongo.Collection) {
-	id := c.Param("id")
-
-	var updateTask Task
-
-	err := c.ShouldBindJSON(&updateTask)
-
-	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, err.Error())
-	}
-
+func UpdateTaskById(updateTask models.Task, id string) error {
 	filter := bson.D{{"id", id}}
 	update1 := bson.D{{"$set", bson.D{{"title", updateTask.Title}}}}
 	update2 := bson.D{{"$set", bson.D{{"description", updateTask.Description}}}}
-
-	_, err = collection.UpdateOne(context.TODO(), filter, update1)
-	_, err = collection.UpdateOne(context.TODO(), filter, update2)
+	_, err := Collection.UpdateOne(context.TODO(), filter, update1)
+	_, err = Collection.UpdateOne(context.TODO(), filter, update2)
 
 	if err != nil {
-		log.Fatal(err)
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Task not found"})
+		return err
 	}
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task updated"})
+	return nil
 }
 
-func deleteTask(c *gin.Context, collection *mongo.Collection) {
-	id := c.Param("id")
-
+func DeleteTask(id string) error {
 	filter := bson.D{{"id", id}}
-	_, err := collection.DeleteOne(context.TODO(), filter)
+	_, err := Collection.DeleteOne(context.TODO(), filter)
 	if err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Task not found"})
+		return err
 	}
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task deleted"})
-
+	return nil
 }
 
-func addTask(c *gin.Context, collection *mongo.Collection) {
-
-	var newTask Task
-
-	err := c.ShouldBindJSON(&newTask)
+func AddTask(newTask models.Task) error {
+	_, err := Collection.InsertOne(context.TODO(), newTask)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, err.Error())
+		return err
 	}
-	fmt.Println(newTask)
-
-	_, err = collection.InsertOne(context.TODO(), newTask)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		log.Fatal(err)
-	}
-
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "task created"})
+	return nil
 }
